@@ -1,73 +1,19 @@
-public class Quantity<U extends IMeasurable> {
+public Quantity<U> subtract(Quantity<U> other) {
 
-    private final double value;
-    private final U unit;
-
-    public Quantity(double value, U unit) {
-        if (!Double.isFinite(value) || unit == null) {
-            throw new IllegalArgumentException("Invalid input");
-        }
-        this.value = value;
-        this.unit = unit;
+    if (other == null) {
+        throw new IllegalArgumentException("Other cannot be null");
     }
 
-    // ✅ Equality
-    @Override
-    public boolean equals(Object obj) {
-
-        if (this == obj) return true;
-        if (!(obj instanceof Quantity)) return false;
-
-        Quantity<?> other = (Quantity<?>) obj;
-
-        // prevent length vs weight comparison
-        if (this.unit.getClass() != other.unit.getClass()) {
-            return false;
-        }
-
-        double v1 = this.unit.convertToBaseUnit(this.value);
-        double v2 = other.unit.convertToBaseUnit(other.value);
-
-        return Math.abs(v1 - v2) < 0.0001;
+    if (this.unit.getClass() != other.unit.getClass()) {
+        throw new IllegalArgumentException("Different measurement types");
     }
 
-    // ✅ Conversion
-    public Quantity<U> convertTo(U targetUnit) {
+    double base1 = unit.convertToBaseUnit(value);
+    double base2 = other.unit.convertToBaseUnit(other.value);
 
-        double base = unit.convertToBaseUnit(value);
-        double result = targetUnit.convertFromBaseUnit(base);
+    double resultBase = base1 - base2;
 
-        return new Quantity<>(result, targetUnit);
-    }
+    double result = unit.convertFromBaseUnit(resultBase);
 
-    // ✅ Addition (same unit as first)
-    public Quantity<U> add(Quantity<U> other) {
-
-        double base1 = unit.convertToBaseUnit(value);
-        double base2 = other.unit.convertToBaseUnit(other.value);
-
-        double sum = base1 + base2;
-
-        double result = unit.convertFromBaseUnit(sum);
-
-        return new Quantity<>(result, unit);
-    }
-
-    // ✅ Addition (custom unit)
-    public Quantity<U> add(Quantity<U> other, U targetUnit) {
-
-        double base1 = unit.convertToBaseUnit(value);
-        double base2 = other.unit.convertToBaseUnit(other.value);
-
-        double sum = base1 + base2;
-
-        double result = targetUnit.convertFromBaseUnit(sum);
-
-        return new Quantity<>(result, targetUnit);
-    }
-
-    @Override
-    public String toString() {
-        return value + " " + unit.getUnitName();
-    }
+    return new Quantity<>(round(result), unit);
 }
